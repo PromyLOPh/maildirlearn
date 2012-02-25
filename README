@@ -6,8 +6,8 @@ the local machine (i.e. you’re reading mail on your server) as well as remote
 (i.e. you’re syncing your mail with mbsync/via IMAP).
 
 There are two versions available: The first one is written in Python and the
-second one in C. Obviously the latter is more efficient while the first one is
-not vulnerable to buffer overflow bugs.
+second one in C. Obviously the latter is more efficient (less memory and CPU
+usage) while the first one is not vulnerable to buffer overflow bugs.
 
 Both versions currently work for a single user/one maildir only. The mailbox
 format is not supported.

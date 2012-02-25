@@ -26,10 +26,11 @@ THE SOFTWARE.
 /* your maildir; must include trailing '/' */
 #define WATCHDIR "mail/"
 
-/* paths you use for spam */
+/* paths you use for spam, POSIX extended regular expression */
 #define SPAMDIRRE "mail/\\.Junk/"
 
-/* paths you want to exclude (temporary files, deleted mail, unsure) */
+/* paths you want to exclude (temporary files, deleted mail, unsure), POSIX
+ * extended regular expression */
 #define EXCLUDERE "mail/(\\.Unsure/|[^/]+/(tmp|.*:2,[A-S]*T[U-Z]*$)|.*dovecot)"
 
 /* bogofilter executable name or path (if not in PATH) */
