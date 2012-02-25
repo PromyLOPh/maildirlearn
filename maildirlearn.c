@@ -39,6 +39,9 @@ THE SOFTWARE.
 /* increase if you have a lot of directories */
 #define HASHTBL_SIZE 128
 
+/* comment if you’re debugging */
+#define NDEBUG 1
+
 /* === END SETUP === */
 
 /* strdup */
@@ -60,6 +63,12 @@ THE SOFTWARE.
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stddef.h>
+
+#ifndef NDEBUG
+#define debug(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define debug(...)
+#endif
 
 /* spam status (tri-state + unknown) */
 typedef enum {UNKNOWN, SPAM, HAM, UNSURE} status_t;
@@ -131,7 +140,7 @@ static bool notifyTblDel (notify_t *n, const int wd) {
 			} else {
 				prev->next = cur->next;
 			}
-			printf ("[-] %i, %s\n", wd, cur->path);
+			debug ("[-] %i, %s\n", wd, cur->path);
 			free (cur->path);
 			free (cur);
 			return true;
@@ -177,7 +186,7 @@ static wdpath_t *notifyTblAdd (notify_t *n, const int wd, const char *relpath) {
 	assert (cur->path != NULL);
 	cur->next = NULL;
 
-	printf ("[+] %i, %s\n", wd, relpath);
+	debug ("[+] %i, %s\n", wd, relpath);
 
 	return cur;
 }
@@ -351,7 +360,7 @@ static bool notifyRead (notify_t *n, const struct inotify_event **retEvent,
 
 	wdp = notifyTblGet (n, event->wd);
 	if (wdp == NULL) {
-		printf ("no wdp\n");
+		debug ("no wdp\n");
 		return false;
 	}
 
@@ -412,17 +421,17 @@ static bool runBogofilter (const char *bogopath, const regex_t spamdirre,
 			/* translate bogofilter exit status to internal status */
 			switch (WEXITSTATUS (status)) {
 				case 2:
-					printf ("curStatus=unsure\n");
+					debug ("curStatus=unsure\n");
 					curStatus = UNSURE;
 					break;
 
 				case 1:
-					printf ("curStatus=ham\n");
+					debug ("curStatus=ham\n");
 					curStatus = HAM;
 					break;
 
 				case 0:
-					printf ("curStatus=spam\n");
+					debug ("curStatus=spam\n");
 					curStatus = SPAM;
 					break;
 
@@ -437,10 +446,10 @@ static bool runBogofilter (const char *bogopath, const regex_t spamdirre,
 	/* user decided this is spam? */
 	if (regexec (&spamdirre, path, 0, NULL, 0) == 0) {
 		/* match */
-		printf ("new status: spam\n");
+		debug ("new status: spam\n");
 		newStatus = SPAM;
 	} else {
-		printf ("new status: ham\n");
+		debug ("new status: ham\n");
 		newStatus = HAM;
 	} /* end if regex */
 
@@ -481,7 +490,7 @@ static bool runBogofilter (const char *bogopath, const regex_t spamdirre,
 				perror ("waitpid2");
 				return false;
 			} else {
-				printf ("bogofilter returned %i\n", WEXITSTATUS (status));
+				debug ("bogofilter returned %i\n", WEXITSTATUS (status));
 			}
 		}
 	} /* end if curStatus != newStatus */
@@ -531,7 +540,7 @@ int main (int argc, char **argv) {
 				continue;
 			}
 
-			//printf ("[!] full: %s\n", fullpath);
+			debug ("[!] full: %s\n", fullpath);
 
 			if (event->mask & IN_IGNORED || event->mask & IN_DELETE_SELF) {
 				/* watch was removed */
@@ -544,7 +553,7 @@ int main (int argc, char **argv) {
 				runBogofilter (BOGOPATH, spamdirre, fullpath);
 			}
 		} else {
-			printf ("notifyRead failed\n");
+			debug ("notifyRead failed\n");
 		}
 	}
 
