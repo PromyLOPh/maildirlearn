@@ -21,6 +21,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+/* === BEGIN SETUP === */
+
+/* your maildir; must include trailing '/' */
+#define WATCHDIR "mail/"
+
+/* paths you use for spam */
+#define SPAMDIRRE "mail/\\.Junk/"
+
+/* paths you want to exclude (temporary files, deleted mail, unsure) */
+#define EXCLUDERE "mail/(\\.Unsure/|[^/]+/(tmp|.*:2,[A-S]*T[U-Z]*$)|.*dovecot)"
+
+/* bogofilter executable name or path (if not in PATH) */
+#define BOGOPATH "bogofilter"
+
+/* increase if you have a lot of directories */
+#define HASHTBL_SIZE 128
+
+/* === END SETUP === */
+
 /* strdup */
 #define _BSD_SOURCE
 
@@ -471,21 +490,20 @@ static bool runBogofilter (const char *bogopath, const regex_t spamdirre,
 
 int main (int argc, char **argv) {
 	regex_t spamdirre, excludere;
-	const char bogopath[] = "bogofilter";
-	/* with '/' postfix */
-	const char watchdir[] = "mail/";
 	int running = 1;
 	notify_t n;
 
 	/* setup */
-	notifyInit (&n, 128, watchdir);
+	notifyInit (&n, HASHTBL_SIZE, WATCHDIR);
 
-	if (regcomp (&spamdirre, "mail/\\.Junk/", REG_EXTENDED) != 0) {
+	if (regcomp (&spamdirre, SPAMDIRRE, REG_EXTENDED) != 0) {
 		printf ("invalid spamdir re\n");
+		return EXIT_FAILURE;
 	}
 
-	if (regcomp (&excludere, "mail/(\\.Unsure/|[^/]+/(tmp|.*:2,[A-S]*T[U-Z]*$)|.*dovecot)", REG_EXTENDED) != 0) {
+	if (regcomp (&excludere, EXCLUDERE, REG_EXTENDED) != 0) {
 		printf ("invalid exclude re\n");
+		return EXIT_FAILURE;
 	}
 
 	while (running) {
@@ -522,7 +540,7 @@ int main (int argc, char **argv) {
 				strncat (fullpath, "/", sizeof (fullpath)-strlen (fullpath)-1);
 				notifyAdd (&n, relpath);
 			} else {
-				runBogofilter (bogopath, spamdirre, fullpath);
+				runBogofilter (BOGOPATH, spamdirre, fullpath);
 			}
 		} else {
 			printf ("notifyRead failed\n");
@@ -531,4 +549,6 @@ int main (int argc, char **argv) {
 
 	regfree (&spamdirre);
 	regfree (&excludere);
+
+	return EXIT_SUCCESS;
 }
